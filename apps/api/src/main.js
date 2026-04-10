@@ -47,6 +47,8 @@ app.use('/', routes());
 
 app.use(errorMiddleware);
 
+app.get('/', (req, res) => res.send('FamilyOfQuran is online'));
+
 app.use((req, res) => {
 	res.status(404).json({ error: 'Route not found' });
 });
