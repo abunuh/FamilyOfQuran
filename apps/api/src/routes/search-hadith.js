@@ -3,11 +3,48 @@ import logger from '../utils/logger.js';
 
 const router = express.Router();
 
-const BOOK_IDS = ['bukhari', 'muslim', 'tirmidzi'];
+const BOOK_IDS = [
+  'bukhari',
+  'muslim',
+  'tirmidzi',
+  'abu-daud',
+  'nasai',
+  'ibnu-majah',
+  'ahmad',
+  'darimi',
+  'malik',
+];
 const BOOK_RANGE = '1-300';
 const CACHE_TTL_MS = 10 * 60 * 1000;
+const ARABIC_DIACRITICS_REGEX = /[\u064B-\u065F\u0670\u06D6-\u06ED]/g;
 
 const hadithCache = new Map();
+
+function normalizeText(value = '') {
+  return String(value)
+    .normalize('NFKC')
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function normalizeArabic(value = '') {
+  return normalizeText(value)
+    .replace(ARABIC_DIACRITICS_REGEX, '')
+    .replace(/ـ/g, '')
+    .replace(/[أإآٱ]/g, 'ا')
+    .replace(/ى/g, 'ي')
+    .replace(/ؤ/g, 'و')
+    .replace(/ئ/g, 'ي')
+    .replace(/ة/g, 'ه');
+}
+
+function formatCollectionName(bookId) {
+  return `HR. ${bookId
+    .split('-')
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ')}`;
+}
 
 async function getBookHadiths(bookId) {
   const cacheEntry = hadithCache.get(bookId);
@@ -40,7 +77,9 @@ router.get('/hadith', async (req, res) => {
   logger.info(`Searching Hadith with query: "${query}" in language: ${language}`);
 
   try {
-    const normalizedQuery = String(query).trim().toLowerCase();
+    const normalizedQuery = language === 'ar'
+      ? normalizeArabic(query)
+      : normalizeText(query);
     const hadithTextField = language === 'ar' ? 'arab' : 'id';
 
     const books = await Promise.all(
@@ -60,14 +99,18 @@ router.get('/hadith', async (req, res) => {
         }))
       )
       .filter((item) => {
-        const searchable = `${item.id || ''} ${item.arab || ''}`.toLowerCase();
-        return searchable.includes(normalizedQuery);
+        if (language === 'ar') {
+          return normalizeArabic(item.arab || '').includes(normalizedQuery);
+        }
+
+        const searchableEn = normalizeText(item.id || '');
+        return searchableEn.includes(normalizedQuery);
       })
       .slice(0, 50)
       .map((item) => ({
         id: `${item.bookId}-${item.number}`,
         hadithText: item[hadithTextField] || item.id || item.arab,
-        collectionName: `HR. ${item.bookId.replace('-', ' ')}`,
+        collectionName: formatCollectionName(item.bookId),
         hadithNumber: item.number,
         hadithReference: `${item.bookId} ${item.number}`,
       }));

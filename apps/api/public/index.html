@@ -286,8 +286,15 @@ function toast(msg, type = 'default', ms = 3000) {
 const API = {
   async search(type, query, lang = 'en') {
     const r = await fetch(`/search/${type}?query=${encodeURIComponent(query)}&language=${encodeURIComponent(lang)}`);
-    if (!r.ok) { const b = await r.json().catch(() => ({})); throw new Error(b.error || b.message || `HTTP ${r.status}`); }
-    return r.json();
+    const bodyText = await r.text();
+    const body = bodyText.trim() ? JSON.parse(bodyText) : null;
+    if (!r.ok) {
+      throw new Error(body?.error || body?.message || `HTTP ${r.status}`);
+    }
+    if (!body) {
+      throw new Error('The server returned an empty response.');
+    }
+    return body;
   },
   async checkout(amountDollars, message) {
     const r = await fetch('/stripe/create-checkout', {

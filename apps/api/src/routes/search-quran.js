@@ -4,6 +4,22 @@ import logger from '../utils/logger.js';
 const router = express.Router();
 
 const stripHtml = (value = '') => value.replace(/<[^>]*>/g, '').trim();
+const ARABIC_DIACRITICS_REGEX = /[\u064B-\u065F\u0670\u06D6-\u06ED]/g;
+
+const normalizeQuery = (value = '', language = 'en') => {
+  const normalized = String(value).normalize('NFKC').trim();
+  if (language !== 'ar') {
+    return normalized;
+  }
+
+  return normalized
+    .replace(ARABIC_DIACRITICS_REGEX, '')
+    .replace(/ـ/g, '')
+    .replace(/[أإآٱ]/g, 'ا')
+    .replace(/ى/g, 'ي')
+    .replace(/ؤ/g, 'و')
+    .replace(/ئ/g, 'ي');
+};
 
 const chapterCache = {
   en: null,
@@ -34,8 +50,9 @@ async function getChapterMap(language) {
 
 router.get('/quran', async (req, res) => {
   const { query, language = 'en' } = req.query;
+  const normalizedQuery = normalizeQuery(query, language);
 
-  if (!query) {
+  if (!normalizedQuery) {
     return res.status(400).json({ error: 'Query parameter is required' });
   }
 
@@ -46,19 +63,28 @@ router.get('/quran', async (req, res) => {
   logger.info(`Searching Quran with query: "${query}" in language: ${language}`);
 
   const params = new URLSearchParams({
-    q: query,
+    q: normalizedQuery,
     language: language,
     size: '20',
   });
 
   try {
-    const response = await fetch(`https://api.quran.com/api/v4/search?${params}`);
+    const response = await fetch(`https://api.quran.com/api/v4/search?${params}`, {
+      headers: {
+        Accept: 'application/json',
+      },
+    });
 
     if (!response.ok) {
       throw new Error(`Quran.com API error: ${response.status} ${response.statusText}`);
     }
 
-    const data = await response.json();
+    const responseText = await response.text();
+    if (!responseText.trim()) {
+      throw new Error('Quran.com API returned an empty response');
+    }
+
+    const data = JSON.parse(responseText);
     const chapterMap = await getChapterMap(language);
 
     const results = (data.search?.results || []).map((result) => {
