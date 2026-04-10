@@ -18,7 +18,7 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const publicDir = path.join(__dirname, '../apps/public');
+const publicDir = path.join(__dirname, '../apps/web/public');
 
 app.use(express.static(publicDir));
 app.get('/', (req, res) => res.sendFile(path.join(publicDir, 'index.html')));
@@ -60,9 +60,12 @@ app.use(errorMiddleware);
 
 app.get('/', (req, res) => res.send('FamilyOfQuran is online'));
 
-app.use((req, res) => {
-	res.status(404).json({ error: 'Route not found' });
+app.get('/', (req, res) => {
+ res.sendFile(path.join(publicDir, 'index.html'), (err) => {
+ if (err) return res.status(500).send(err.message);
+ });
 });
+
 
 const port = process.env.PORT || 3001;
 
