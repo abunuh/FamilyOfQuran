@@ -12,6 +12,17 @@ import logger from './utils/logger.js';
 
 const app = express();
 
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const publicDir = path.join(__dirname, '../apps/public');
+
+app.use(express.static(publicDir));
+app.get('/', (req, res) => res.sendFile(path.join(publicDir, 'index.html')));
+
 process.on('uncaughtException', (error) => {
 	logger.error('Uncaught exception:', error);
 });
