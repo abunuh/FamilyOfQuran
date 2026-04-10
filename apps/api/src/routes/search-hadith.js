@@ -39,39 +39,44 @@ router.get('/hadith', async (req, res) => {
 
   logger.info(`Searching Hadith with query: "${query}" in language: ${language}`);
 
-  const normalizedQuery = String(query).trim().toLowerCase();
-  const hadithTextField = language === 'ar' ? 'arab' : 'id';
+  try {
+    const normalizedQuery = String(query).trim().toLowerCase();
+    const hadithTextField = language === 'ar' ? 'arab' : 'id';
 
-  const books = await Promise.all(
-    BOOK_IDS.map(async (bookId) => ({
-      bookId,
-      items: await getBookHadiths(bookId),
-    }))
-  );
-
-  const results = books
-    .flatMap(({ bookId, items }) =>
-      items.map((item) => ({
+    const books = await Promise.all(
+      BOOK_IDS.map(async (bookId) => ({
         bookId,
-        number: item.number,
-        arab: item.arab,
-        id: item.id,
+        items: await getBookHadiths(bookId),
       }))
-    )
-    .filter((item) => {
-      const searchable = `${item.id || ''} ${item.arab || ''}`.toLowerCase();
-      return searchable.includes(normalizedQuery);
-    })
-    .slice(0, 50)
-    .map((item) => ({
-      id: `${item.bookId}-${item.number}`,
-      hadithText: item[hadithTextField] || item.id || item.arab,
-      collectionName: `HR. ${item.bookId.replace('-', ' ')}`,
-      hadithNumber: item.number,
-      hadithReference: `${item.bookId} ${item.number}`,
-    }));
+    );
 
-  res.json(results);
+    const results = books
+      .flatMap(({ bookId, items }) =>
+        items.map((item) => ({
+          bookId,
+          number: item.number,
+          arab: item.arab,
+          id: item.id,
+        }))
+      )
+      .filter((item) => {
+        const searchable = `${item.id || ''} ${item.arab || ''}`.toLowerCase();
+        return searchable.includes(normalizedQuery);
+      })
+      .slice(0, 50)
+      .map((item) => ({
+        id: `${item.bookId}-${item.number}`,
+        hadithText: item[hadithTextField] || item.id || item.arab,
+        collectionName: `HR. ${item.bookId.replace('-', ' ')}`,
+        hadithNumber: item.number,
+        hadithReference: `${item.bookId} ${item.number}`,
+      }));
+
+    res.json(results);
+  } catch (err) {
+    logger.error('Hadith search error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 export default router;

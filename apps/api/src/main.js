@@ -47,8 +47,7 @@ process.on('SIGTERM', async () => {
 
 app.use(helmet());
 app.use(cors({
-	origin: process.env.CORS_ORIGIN,
-	credentials: true,
+	origin: process.env.CORS_ORIGIN || true,
 }));
 app.use(morgan('combined'));
 app.use(express.json());

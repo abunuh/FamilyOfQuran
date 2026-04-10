@@ -51,33 +51,38 @@ router.get('/quran', async (req, res) => {
     size: '20',
   });
 
-  const response = await fetch(`https://api.quran.com/api/v4/search?${params}`);
+  try {
+    const response = await fetch(`https://api.quran.com/api/v4/search?${params}`);
 
-  if (!response.ok) {
-    throw new Error(`Quran.com API error: ${response.status} ${response.statusText}`);
+    if (!response.ok) {
+      throw new Error(`Quran.com API error: ${response.status} ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    const chapterMap = await getChapterMap(language);
+
+    const results = (data.search?.results || []).map((result) => {
+      const [surahIdText, verseNumberText] = String(result.verse_key || '').split(':');
+      const surahId = Number(surahIdText);
+      const verseNumber = Number(verseNumberText);
+      const surahName = chapterMap.get(surahId) || `Surah ${surahId}`;
+      const translationText = stripHtml(result.translations?.[0]?.text || '');
+
+      return {
+        id: result.verse_id,
+        surahName,
+        verseNumber,
+        verseText: language === 'ar' ? result.text : (translationText || stripHtml(result.text || '')),
+        verseReference: `${surahName} ${verseNumber}`,
+        translation: language === 'en' ? translationText : undefined,
+      };
+    });
+
+    res.json(results);
+  } catch (err) {
+    logger.error('Quran search error:', err.message);
+    res.status(500).json({ error: err.message });
   }
-
-  const data = await response.json();
-  const chapterMap = await getChapterMap(language);
-
-  const results = (data.search?.results || []).map((result) => {
-    const [surahIdText, verseNumberText] = String(result.verse_key || '').split(':');
-    const surahId = Number(surahIdText);
-    const verseNumber = Number(verseNumberText);
-    const surahName = chapterMap.get(surahId) || `Surah ${surahId}`;
-    const translationText = stripHtml(result.translations?.[0]?.text || '');
-
-    return {
-      id: result.verse_id,
-      surahName,
-      verseNumber,
-      verseText: language === 'ar' ? result.text : (translationText || stripHtml(result.text || '')),
-      verseReference: `${surahName} ${verseNumber}`,
-      translation: language === 'en' ? translationText : undefined,
-    };
-  });
-
-  res.json(results);
 });
 
 export default router;

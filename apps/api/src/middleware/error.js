@@ -14,7 +14,6 @@ export default (err, req, res, next) => {
 			error: {
 				name: err.name,
 				message: err.message,
-				stack: err.stack,
 			},
 		}),
 	});

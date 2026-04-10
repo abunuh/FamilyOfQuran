@@ -27,7 +27,12 @@ export default function BilingualSearch() {
       const response = await apiServerClient.fetch(`${endpoint}?query=${encodeURIComponent(query)}&language=${language}`);
       
       if (!response.ok) {
-        throw new Error('Failed to fetch search results. Please try again.');
+        let errorMsg = 'Failed to fetch search results. Please try again.';
+        try {
+          const errData = await response.json();
+          if (errData?.error) errorMsg = errData.error;
+        } catch (_) { /* ignore parse failure */ }
+        throw new Error(errorMsg);
       }
       
       const data = await response.json();
