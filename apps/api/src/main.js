@@ -54,8 +54,8 @@ app.use('/', routes());
 
 app.use(errorMiddleware);
 
-// SPA fallback — serve index.html for all non-API paths
-app.get('*', (req, res) => {
+// SPA fallback — regex avoids Express 5 wildcard parsing issues
+app.get(/^(?!\/(search|stripe|health)\b).*/, (req, res) => {
 	res.sendFile(join(PUBLIC_DIR, 'index.html'));
 });
 
