@@ -18,6 +18,8 @@ router.post('/create-checkout', async (req, res) => {
 
   logger.info(`Creating Stripe Checkout Session for amount: ${amount} cents, message: "${donationMessage || 'No message'}"`)
 
+  const origin = req.headers.origin || process.env.APP_URL || `http://localhost:${process.env.PORT || 3001}`;
+
   const session = await stripe.checkout.sessions.create({
     payment_method_types: ['card'],
     line_items: [
@@ -33,8 +35,8 @@ router.post('/create-checkout', async (req, res) => {
       },
     ],
     mode: 'payment',
-    success_url: '{CHECKOUT_SESSION_ID}',
-    cancel_url: '{CHECKOUT_SESSION_ID}',
+    success_url: `${origin}/donation-success?session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `${origin}/donation-cancel`,
   });
 
   res.json({ url: session.url });

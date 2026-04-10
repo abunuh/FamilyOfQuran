@@ -21,24 +21,34 @@ export default function BilingualSearch() {
   const handleSearch = async (query) => {
     setIsLoading(true);
     setError(null);
+    console.log('[Search] Starting search — tab:', tab, '| query:', query, '| language:', language);
     
     try {
       const endpoint = tab === 'quran' ? '/search/quran' : '/search/hadith';
-      const response = await apiServerClient.fetch(`${endpoint}?query=${encodeURIComponent(query)}&language=${language}`);
+      const requestUrl = `${endpoint}?query=${encodeURIComponent(query)}&language=${language}`;
+      console.log('[Search] Calling endpoint:', requestUrl);
+
+      const response = await apiServerClient.fetch(requestUrl);
+      console.log('[Search] HTTP status:', response.status, response.statusText);
       
       if (!response.ok) {
         let errorMsg = 'Failed to fetch search results. Please try again.';
         try {
           const errData = await response.json();
+          console.error('[Search] Error response body:', errData);
           if (errData?.error) errorMsg = errData.error;
-        } catch (_) { /* ignore parse failure */ }
+          if (errData?.message) errorMsg = errData.message;
+        } catch (parseErr) {
+          console.error('[Search] Could not parse error body:', parseErr);
+        }
         throw new Error(errorMsg);
       }
       
       const data = await response.json();
+      console.log('[Search] Success — result count:', Array.isArray(data) ? data.length : data, data);
       setResults(data);
     } catch (err) {
-      console.error('Search error:', err);
+      console.error('[Search] Caught error:', err.name, err.message, err);
       setError(err.message || 'An unexpected error occurred.');
       setResults(null);
     } finally {

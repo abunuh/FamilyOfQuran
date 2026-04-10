@@ -1,32 +1,27 @@
 import dotenv from 'dotenv';
 dotenv.config();
+
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 
 import routes from './routes/index.js';
 import { errorMiddleware } from './middleware/index.js';
 import logger from './utils/logger.js';
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname  = dirname(__filename);
+const PUBLIC_DIR = join(__dirname, '..', 'public');
 
 const app = express();
-
-import path from 'path';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const publicDir = path.join(__dirname, '../apps/web/public');
-
-app.use(express.static(publicDir));
-app.get('/', (req, res) => res.sendFile(path.join(publicDir, 'index.html')));
 
 process.on('uncaughtException', (error) => {
 	logger.error('Uncaught exception:', error);
 });
-  
+
 process.on('unhandledRejection', (reason, promise) => {
 	logger.error('Unhandled rejection at:', promise, 'reason:', reason);
 });
@@ -38,9 +33,7 @@ process.on('SIGINT', async () => {
 
 process.on('SIGTERM', async () => {
 	logger.info('SIGTERM signal received');
-
 	await new Promise(resolve => setTimeout(resolve, 3000));
-
 	logger.info('Exiting');
 	process.exit();
 });
@@ -53,18 +46,18 @@ app.use(morgan('combined'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Serve the static HTML frontend from public/
+app.use(express.static(PUBLIC_DIR));
+
+// API routes
 app.use('/', routes());
 
 app.use(errorMiddleware);
 
-app.get('/', (req, res) => res.send('FamilyOfQuran is online'));
-
-app.get('/', (req, res) => {
- res.sendFile(path.join(publicDir, 'index.html'), (err) => {
- if (err) return res.status(500).send(err.message);
- });
+// SPA fallback — serve index.html for all non-API paths
+app.get('*', (req, res) => {
+	res.sendFile(join(PUBLIC_DIR, 'index.html'));
 });
-
 
 const port = process.env.PORT || 3001;
 

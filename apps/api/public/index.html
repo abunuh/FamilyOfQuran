@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Family of the Quran</title>
+  <meta name="description" content="Explore the Holy Quran and authentic Hadith collections. Family of the Quran connects you to essential Islamic resources.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@400;500;600&family=Amiri:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:           hsl(45,35%,96%);
+      --fg:           hsl(220,15%,20%);
+      --card:         #fff;
+      --primary:      hsl(175,60%,35%);
+      --primary-fg:   hsl(0,0%,98%);
+      --secondary:    hsl(40,70%,65%);
+      --muted:        hsl(30,10%,92%);
+      --muted-fg:     hsl(220,10%,45%);
+      --border:       hsl(30,15%,85%);
+      --destructive:  hsl(0,72%,51%);
+      --dest-fg:      hsl(0,0%,98%);
+      --radius:       0.75rem;
+      --shadow:       0 1px 3px rgba(0,0,0,.07), 0 1px 2px rgba(0,0,0,.05);
+    }
+
+    html { scroll-behavior: smooth; }
+    body  { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--fg); min-height: 100vh; line-height: 1.6; }
+    a     { color: inherit; text-decoration: none; }
+    button { cursor: pointer; font-family: inherit; }
+
+    /* ── TOAST ───────────────────────────────────── */
+    #toast-container { position:fixed; bottom:1.25rem; right:1.25rem; z-index:9999; display:flex; flex-direction:column; gap:.5rem; pointer-events:none; }
+    .toast { background:var(--fg); color:var(--bg); padding:.75rem 1.25rem; border-radius:.5rem; font-size:.875rem; box-shadow:0 4px 16px rgba(0,0,0,.15); animation:slideIn .2s ease; max-width:22rem; pointer-events:auto; }
+    .toast.success { background:var(--primary); color:var(--primary-fg); }
+    .toast.error   { background:var(--destructive); color:var(--dest-fg); }
+    @keyframes slideIn { from{transform:translateX(110%);opacity:0} to{transform:translateX(0);opacity:1} }
+
+    /* ── MODAL ───────────────────────────────────── */
+    .modal-overlay { position:fixed; inset:0; z-index:1000; background:rgba(0,0,0,.5); display:flex; align-items:center; justify-content:center; padding:1rem; }
+    .modal { background:var(--card); border-radius:1rem; padding:2rem; width:100%; max-width:28rem; box-shadow:0 12px 48px rgba(0,0,0,.2); }
+    .modal-title { font-family:'Lora',serif; font-size:1.35rem; font-weight:600; margin-bottom:.4rem; display:flex; align-items:center; gap:.5rem; }
+    .modal-desc  { color:var(--muted-fg); font-size:.875rem; margin-bottom:1.25rem; }
+
+    /* ── BUTTONS ─────────────────────────────────── */
+    .btn { display:inline-flex; align-items:center; justify-content:center; gap:.4rem; padding:.5rem 1.25rem; border-radius:9999px; font-size:.9rem; font-weight:500; border:none; transition:opacity .15s, transform .1s; white-space:nowrap; }
+    .btn:hover   { opacity:.88; }
+    .btn:active  { transform:scale(.97); }
+    .btn:disabled{ opacity:.5; pointer-events:none; }
+    .btn-primary { background:var(--primary); color:var(--primary-fg); }
+    .btn-outline { background:transparent; border:1.5px solid var(--border); color:var(--fg); }
+    .btn-ghost   { background:transparent; border:none; color:var(--muted-fg); padding:.4rem .75rem; border-radius:9999px; }
+    .btn-ghost:hover { background:var(--muted); color:var(--fg); }
+    .btn-danger  { background:var(--destructive); color:var(--dest-fg); }
+    .btn-sm      { padding:.3rem .75rem; font-size:.8rem; }
+    .btn-icon    { padding:.45rem; border-radius:50%; background:transparent; border:none; color:var(--muted-fg); display:inline-flex; align-items:center; justify-content:center; }
+    .btn-icon:hover { background:var(--muted); color:var(--fg); }
+
+    /* ── INPUTS ──────────────────────────────────── */
+    input[type="text"],input[type="number"],textarea,select {
+      font-family:inherit; font-size:.9rem; background:var(--card); color:var(--fg);
+      border:1.5px solid var(--border); border-radius:var(--radius); padding:.65rem 1rem;
+      outline:none; width:100%; transition:border-color .15s;
+    }
+    input:focus,textarea:focus,select:focus { border-color:var(--primary); }
+    textarea { resize:vertical; }
+
+    /* ── SITE HEADER ─────────────────────────────── */
+    .site-header { position:sticky; top:0; z-index:100; background:rgba(247,243,237,.93); backdrop-filter:blur(10px); border-bottom:1px solid var(--border); }
+    .site-header-inner { max-width:72rem; margin:0 auto; padding:.75rem 1.5rem; display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap; }
+    .site-logo { font-family:'Lora',serif; font-weight:700; font-size:1.15rem; color:var(--primary); cursor:pointer; }
+    .nav-links { display:flex; align-items:center; gap:.4rem; flex-wrap:wrap; }
+    .nav-link { padding:.4rem .85rem; border-radius:9999px; font-size:.85rem; font-weight:500; color:var(--muted-fg); background:transparent; border:none; cursor:pointer; transition:all .15s; }
+    .nav-link:hover { background:var(--muted); color:var(--fg); }
+
+    /* ── HERO ────────────────────────────────────── */
+    .hero { background:linear-gradient(135deg,hsl(175,60%,32%) 0%,hsl(175,60%,22%) 100%); color:#fff; text-align:center; padding:5rem 1.5rem 7rem; }
+    .hero h1 { font-family:'Lora',serif; font-size:clamp(1.8rem,5vw,3rem); font-weight:700; margin-bottom:1rem; }
+    .hero p  { font-size:clamp(.95rem,2vw,1.1rem); opacity:.9; max-width:38rem; margin:0 auto .75rem; }
+
+    /* ── SEARCH CARD ─────────────────────────────── */
+    .search-section { padding:0 1.5rem 2rem; max-width:56rem; margin:0 auto; }
+    .search-card { background:var(--card); border-radius:1.5rem; padding:2rem 1.75rem; border:1.5px solid var(--border); box-shadow:0 4px 24px rgba(0,0,0,.09); margin-top:-3.5rem; position:relative; }
+
+    /* ── TABS ────────────────────────────────────── */
+    .tabs { display:flex; gap:.5rem; margin-bottom:1.5rem; }
+    .tab-btn { flex:1; padding:.6rem 1rem; border-radius:9999px; border:1.5px solid var(--border); background:transparent; font-weight:600; font-size:.875rem; cursor:pointer; color:var(--muted-fg); transition:all .15s; }
+    .tab-btn.active { background:var(--primary); color:var(--primary-fg); border-color:var(--primary); }
+
+    /* ── SEARCH ROW ──────────────────────────────── */
+    .search-row { display:flex; gap:.75rem; align-items:center; margin-bottom:1rem; flex-wrap:wrap; }
+    .search-input-wrap { position:relative; flex:1; min-width:10rem; }
+    .search-input-wrap svg { position:absolute; left:.9rem; top:50%; transform:translateY(-50%); color:var(--muted-fg); pointer-events:none; }
+    .search-input-wrap input { padding-left:2.6rem; }
+    .search-clear { position:absolute; right:.75rem; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--muted-fg); cursor:pointer; padding:.1rem; display:flex; align-items:center; }
+    .search-clear:hover { color:var(--fg); }
+    .lang-select { border-radius:9999px; padding:.55rem .85rem; min-width:7rem; }
+    .search-actions { display:flex; justify-content:center; margin-top:.25rem; }
+
+    /* ── RESULT CARD ─────────────────────────────── */
+    .result-card { background:var(--card); border:1.5px solid var(--border); border-radius:1rem; margin-bottom:.85rem; overflow:visible; }
+    .result-header { display:flex; justify-content:space-between; align-items:flex-start; gap:1rem; padding:1.1rem 1.1rem .6rem; }
+    .result-meta   { display:flex; align-items:center; gap:.75rem; }
+    .result-icon   { width:2.4rem; height:2.4rem; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    .result-icon.quran  { background:hsl(175,60%,90%); color:var(--primary); }
+    .result-icon.hadith { background:hsl(40,70%,90%);  color:hsl(40,60%,40%); }
+    .result-title    { font-weight:600; font-size:.95rem; }
+    .result-subtitle { font-size:.78rem; color:var(--muted-fg); margin-top:.1rem; }
+    .result-actions  { display:flex; align-items:center; gap:.2rem; flex-shrink:0; }
+    .result-badge    { font-size:.7rem; background:var(--muted); padding:.2rem .55rem; border-radius:9999px; color:var(--muted-fg); white-space:nowrap; margin-right:.25rem; }
+    .result-body  { padding:.25rem 1.1rem 1.1rem; }
+    .result-text  { font-size:.975rem; line-height:1.85; color:var(--fg); }
+    .result-text.arabic { font-family:'Amiri',serif; font-size:1.35rem; direction:rtl; text-align:right; line-height:2.2; }
+    .heart-btn.bookmarked { color:hsl(0,72%,51%) !important; }
+    .heart-btn.bookmarked svg { fill:hsl(0,72%,51%); }
+
+    /* ── DROPDOWN ────────────────────────────────── */
+    .dropdown { position:relative; display:inline-block; }
+    .dropdown-menu { position:absolute; right:0; top:calc(100% + .3rem); background:var(--card); border:1.5px solid var(--border); border-radius:.75rem; box-shadow:0 4px 24px rgba(0,0,0,.12); min-width:13rem; z-index:500; display:none; overflow:hidden; }
+    .dropdown-menu.open { display:block; }
+    .dropdown-item { display:flex; align-items:center; gap:.5rem; padding:.6rem 1rem; font-size:.85rem; cursor:pointer; background:transparent; border:none; width:100%; text-align:left; color:var(--fg); transition:background .1s; }
+    .dropdown-item:hover { background:var(--muted); }
+    .dropdown-sep  { height:1px; background:var(--border); margin:.25rem 0; }
+
+    /* ── LOADING / EMPTY / ERROR ─────────────────── */
+    .skeleton    { background:var(--muted); border-radius:.5rem; animation:pulse 1.5s ease-in-out infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.45} }
+    .empty-state { text-align:center; padding:3.5rem 1.5rem; color:var(--muted-fg); }
+    .empty-state svg.big { display:block; margin:0 auto 1rem; width:3rem; height:3rem; opacity:.35; }
+    .empty-state h3 { font-size:1.15rem; font-weight:600; color:var(--fg); margin-bottom:.4rem; }
+    .error-msg   { background:hsl(0,72%,96%); border:1.5px solid hsl(0,72%,82%); color:hsl(0,62%,38%); border-radius:.75rem; padding:1rem 1.25rem; text-align:center; font-size:.9rem; }
+
+    /* ── FEATURES ────────────────────────────────── */
+    .features { padding:3rem 1.5rem 4rem; max-width:72rem; margin:0 auto; }
+    .features h2 { font-family:'Lora',serif; font-size:clamp(1.5rem,4vw,2rem); text-align:center; margin-bottom:.5rem; }
+    .features-sub { text-align:center; color:var(--muted-fg); margin-bottom:2.5rem; }
+    .features-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(16rem,1fr)); gap:1.25rem; }
+    .feature-card { padding:1.5rem; border-radius:1rem; border:1.5px solid var(--border); background:var(--card); transition:box-shadow .2s; }
+    .feature-card:hover { box-shadow:0 4px 16px rgba(0,0,0,.08); }
+    .feature-icon { width:2.75rem; height:2.75rem; border-radius:.6rem; display:flex; align-items:center; justify-content:center; margin-bottom:.9rem; }
+    .feature-icon.teal { background:hsl(175,60%,90%); color:var(--primary); }
+    .feature-icon.gold { background:hsl(40,70%,90%);  color:hsl(40,60%,40%); }
+    .feature-card h3 { font-weight:600; margin-bottom:.35rem; font-size:.975rem; }
+    .feature-card p  { font-size:.85rem; color:var(--muted-fg); line-height:1.6; }
+
+    /* ── PAGE LAYOUT ─────────────────────────────── */
+    .page { max-width:56rem; margin:0 auto; padding:2rem 1.5rem 5rem; }
+    .page-wide { max-width:72rem; }
+    .page-header { display:flex; align-items:center; gap:.85rem; margin-bottom:2rem; flex-wrap:wrap; }
+    .page-title  { font-family:'Lora',serif; font-size:1.4rem; font-weight:600; }
+    .spacer { flex:1; }
+
+    /* ── FILTER BAR ──────────────────────────────── */
+    .filter-bar { display:flex; flex-wrap:wrap; gap:.75rem; align-items:center; margin-bottom:1.5rem; }
+    .select-sm   { padding:.45rem .75rem; font-size:.85rem; border-radius:var(--radius); min-width:9rem; }
+
+    /* ── NOTEPAD ─────────────────────────────────── */
+    #notepad-area { min-height:62vh; resize:none; border-radius:1rem; font-size:1rem; line-height:1.85; padding:1.5rem; background:#fff; border:1.5px solid var(--border); font-family:'DM Sans',sans-serif; width:100%; display:block; }
+
+    /* ── DONATION ────────────────────────────────── */
+    .amount-presets { display:flex; flex-wrap:wrap; gap:.5rem; margin-bottom:1rem; }
+    .preset-btn { flex:1; min-width:3.5rem; padding:.5rem; border:1.5px solid var(--border); border-radius:.5rem; background:var(--muted); font-weight:600; font-size:.9rem; cursor:pointer; transition:all .15s; }
+    .preset-btn.active { background:var(--primary); color:var(--primary-fg); border-color:var(--primary); }
+    .modal-actions { display:flex; gap:.75rem; margin-top:1.25rem; }
+    .modal-actions .btn { flex:1; justify-content:center; }
+
+    /* ── UTILS ───────────────────────────────────── */
+    .flex   { display:flex; }
+    .items-center { align-items:center; }
+    .gap-2  { gap:.5rem; }
+    .text-sm   { font-size:.875rem; }
+    .text-muted{ color:var(--muted-fg); }
+    .mb-1 { margin-bottom:.25rem; }
+    .mb-2 { margin-bottom:.5rem; }
+    .mt-2 { margin-top:.5rem; }
+    .w-full   { width:100%; }
+
+    @media(max-width:600px) {
+      .hide-sm { display:none; }
+      .page    { padding:1.5rem 1rem 5rem; }
+      .search-card { padding:1.5rem 1.1rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════ HEADER ═══════════════ -->
+<header class="site-header">
+  <div class="site-header-inner">
+    <span class="site-logo" onclick="navigate('/')">Family of the Quran</span>
+    <nav class="nav-links">
+      <button class="nav-link hide-sm" onclick="navigate('/history')">History</button>
+      <button class="nav-link hide-sm" onclick="navigate('/notepad')">Notepad</button>
+      <button class="nav-link hide-sm" onclick="navigate('/bookmarks')">Bookmarks</button>
+      <button class="btn btn-primary btn-sm" onclick="openDonationModal()">&#9825; Support Us</button>
+    </nav>
+  </div>
+</header>
+
+<main id="app"></main>
+<div id="toast-container"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script>
+'use strict';
+
+/* ═══════════════════════════════════════════════════════
+   ICONS
+═══════════════════════════════════════════════════════ */
+const I = {
+  book:    `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>`,
+  scroll:  `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h12a2 2 0 0 0 2-2v-2H10v2a2 2 0 1 1-4 0V5a2 2 0 1 0-4 0v3h4"/><path d="M19 3H8.5a2 2 0 0 0-2 2v12"/></svg>`,
+  heart:   `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`,
+  share:   `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>`,
+  copy:    `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>`,
+  trash:   `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>`,
+  search:  `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>`,
+  x:       `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>`,
+  back:    `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>`,
+  download:`<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>`,
+  history: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>`,
+  bookmark:`<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg>`,
+  note:    `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>`,
+  tw:      `<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4l11.733 16H20L8.267 4z"/><path d="M4 20l6.768-6.768M15.232 9.768 20 4"/></svg>`,
+  wa:      `<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>`,
+};
+
+/* ═══════════════════════════════════════════════════════
+   STORAGE
+═══════════════════════════════════════════════════════ */
+const Store = {
+  get(k, def = null)  { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : def; } catch { return def; } },
+  set(k, v)           { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
+};
+
+const BM = {
+  all()                { return Store.get('foq_bm', []); },
+  has(id, type)        { return this.all().some(b => b.id === id && b.type === type); },
+  toggle(id, type, d)  {
+    let all = this.all();
+    const i = all.findIndex(b => b.id === id && b.type === type);
+    if (i > -1) { all.splice(i, 1); Store.set('foq_bm', all); return false; }
+    all.unshift({ id, type, data: d, timestamp: Date.now() });
+    Store.set('foq_bm', all); return true;
+  },
+  remove(id, type)     { Store.set('foq_bm', this.all().filter(b => !(b.id===id && b.type===type))); },
+};
+
+const NP = {
+  get()                { return Store.get('foq_np', { content: '', lastSaved: null }); },
+  save(content)        { Store.set('foq_np', { content, lastSaved: Date.now() }); },
+};
+
+const Hist = {
+  all()               { return Store.get('foq_hist', []); },
+  add(data, type)     {
+    const id = data.id || (type === 'quran' ? data.verseReference : data.hadithReference);
+    const arr = this.all().filter(h => !(h.id===id && h.type===type));
+    arr.unshift({ id, type, data, timestamp: Date.now() });
+    Store.set('foq_hist', arr.slice(0, 100));
+  },
+  clear()             { Store.set('foq_hist', []); },
+  remove(id, type)    { Store.set('foq_hist', this.all().filter(h => !(h.id===id && h.type===type))); },
+};
+
+/* ═══════════════════════════════════════════════════════
+   TOAST
+═══════════════════════════════════════════════════════ */
+function toast(msg, type = 'default', ms = 3000) {
+  const el = document.createElement('div');
+  el.className = 'toast' + (type !== 'default' ? ' ' + type : '');
+  el.textContent = msg;
+  document.getElementById('toast-container').appendChild(el);
+  setTimeout(() => {
+    el.style.transition = 'opacity .3s,transform .3s';
+    el.style.opacity = '0'; el.style.transform = 'translateX(110%)';
+    setTimeout(() => el.remove(), 310);
+  }, ms);
+}
+
+/* ═══════════════════════════════════════════════════════
+   API
+═══════════════════════════════════════════════════════ */
+const API = {
+  async search(type, query, lang = 'en') {
+    const r = await fetch(`/search/${type}?query=${encodeURIComponent(query)}&language=${encodeURIComponent(lang)}`);
+    if (!r.ok) { const b = await r.json().catch(() => ({})); throw new Error(b.error || b.message || `HTTP ${r.status}`); }
+    return r.json();
+  },
+  async checkout(amountDollars, message) {
+    const r = await fetch('/stripe/create-checkout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ amount: Math.round(amountDollars * 100), donationMessage: message }),
+    });
+    if (!r.ok) throw new Error('Failed to initialise checkout');
+    return r.json();
+  },
+  async session(id) {
+    const r = await fetch(`/stripe/session/${encodeURIComponent(id)}`);
+    if (!r.ok) throw new Error('Could not verify session');
+    return r.json();
+  },
+};
+
+/* ═══════════════════════════════════════════════════════
+   CARD STORE  (avoids inline JSON in onclick attributes)
+═══════════════════════════════════════════════════════ */
+const cardStore = [];
+function storeCard(result, type) { cardStore.push({ result, type }); return cardStore.length - 1; }
+
+/* ═══════════════════════════════════════════════════════
+   ROUTER
+═══════════════════════════════════════════════════════ */
+function navigate(path) { history.pushState(null, '', path); renderPage(path); }
+window.addEventListener('popstate', () => renderPage(location.pathname));
+
+function renderPage(path) {
+  cardStore.length = 0;            // reset on every navigation
+  closeAllDropdowns();
+  const app = document.getElementById('app');
+  if      (path === '/' || path === '')      renderHome(app);
+  else if (path === '/bookmarks')            renderBookmarks(app);
+  else if (path === '/notepad')              renderNotepad(app);
+  else if (path === '/history')              renderHistory(app);
+  else if (path === '/donation-success')     renderDonationSuccess(app);
+  else if (path === '/donation-cancel')      renderDonationCancel(app);
+  else                                        render404(app);
+}
+
+/* ═══════════════════════════════════════════════════════
+   RESULT CARD  (shared by home search + bookmarks + history)
+═══════════════════════════════════════════════════════ */
+function resultCard(result, type, language = 'en') {
+  const idx  = storeCard(result, type);
+  const isQ  = type === 'quran';
+  const id   = result.id || (isQ ? result.verseReference : result.hadithReference);
+  const bm   = BM.has(id, type);
+  const title = isQ ? result.surahName     : result.collectionName;
+  const sub   = isQ ? `Verse ${result.verseNumber}`   : `Hadith ${result.hadithNumber}`;
+  const ref   = isQ ? result.verseReference : result.hadithReference;
+  const text  = isQ ? result.verseText      : result.hadithText;
+
+  return `
+  <div class="result-card" data-idx="${idx}">
+    <div class="result-header">
+      <div class="result-meta">
+        <div class="result-icon ${isQ ? 'quran' : 'hadith'}">${isQ ? I.book : I.scroll}</div>
+        <div>
+          <div class="result-title">${esc(title)}</div>
+          <div class="result-subtitle">${esc(sub)}</div>
+        </div>
+      </div>
+      <div class="result-actions">
+        <span class="result-badge">${esc(ref)}</span>
+        <button class="btn-icon heart-btn ${bm ? 'bookmarked' : ''}" data-action="bookmark" title="${bm ? 'Remove' : 'Bookmark'}">${I.heart}</button>
+        <div class="dropdown">
+          <button class="btn-icon" data-action="toggle-dd" title="Share / Copy">${I.share}</button>
+          <div class="dropdown-menu">
+            <button class="dropdown-item" data-action="copy-text">${I.copy} Copy Text</button>
+            <button class="dropdown-item" data-action="copy-ref">${I.copy} Copy with Reference</button>
+            <div class="dropdown-sep"></div>
+            <button class="dropdown-item" data-action="share-tw">${I.tw} Share to X</button>
+            <button class="dropdown-item" data-action="share-wa">${I.wa} Share to WhatsApp</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="result-body">
+      <p class="result-text ${language === 'ar' ? 'arabic' : ''}">${esc(text)}</p>
+    </div>
+  </div>`;
+}
+
+/* ─── single event-delegation listener for all card actions ─── */
+document.addEventListener('click', e => {
+  // close dropdowns when clicking outside
+  if (!e.target.closest('.dropdown')) closeAllDropdowns();
+
+  const action = e.target.closest('[data-action]')?.dataset?.action;
+  if (!action) return;
+
+  const card = e.target.closest('[data-idx]');
+  if (!card && action !== 'toggle-dd') return;
+
+  const idx    = card ? parseInt(card.dataset.idx, 10) : -1;
+  const entry  = cardStore[idx];
+  if (!entry && action !== 'toggle-dd') return;
+  const { result, type } = entry || {};
+  const isQ    = type === 'quran';
+  const text   = isQ ? result?.verseText      : result?.hadithText;
+  const ref    = isQ ? result?.verseReference  : result?.hadithReference;
+  const id     = result?.id || ref;
+
+  if (action === 'toggle-dd') {
+    e.stopPropagation();
+    const dd   = e.target.closest('.dropdown');
+    const menu = dd?.querySelector('.dropdown-menu');
+    if (!menu) return;
+    const was = menu.classList.contains('open');
+    closeAllDropdowns();
+    if (!was) menu.classList.add('open');
+    return;
+  }
+  if (action === 'bookmark') {
+    const btn   = card.querySelector('[data-action="bookmark"]');
+    const added = BM.toggle(id, type, result);
+    if (added) { btn.classList.add('bookmarked');    Hist.add(result, type); toast(`${isQ?'Verse':'Hadith'} bookmarked`, 'success'); }
+    else        { btn.classList.remove('bookmarked'); toast('Removed from bookmarks'); }
+    return;
+  }
+  closeAllDropdowns();
+  if (action === 'copy-text') { clipCopy(text); return; }
+  if (action === 'copy-ref')  { clipCopy(`"${text}" — ${ref}`); return; }
+  if (action === 'share-tw')  { window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(`"${text}" — ${ref} | Family of the Quran`)}`, '_blank', 'noopener'); return; }
+  if (action === 'share-wa')  { window.open(`https://wa.me/?text=${encodeURIComponent(`"${text}" — ${ref}`)}`, '_blank', 'noopener'); return; }
+});
+
+function closeAllDropdowns() { document.querySelectorAll('.dropdown-menu.open').forEach(m => m.classList.remove('open')); }
+async function clipCopy(text, msg = 'Copied to clipboard') {
+  try { await navigator.clipboard.writeText(text); toast(msg, 'success'); }
+  catch { toast('Copy failed', 'error'); }
+}
+
+/* ═══════════════════════════════════════════════════════
+   HOME PAGE
+═══════════════════════════════════════════════════════ */
+let S = { tab: 'quran', lang: 'en', query: '', results: null, loading: false, error: null };
+
+function renderHome(el) {
+  document.title = 'Family of the Quran – Your Gateway to Islamic Knowledge';
+  el.innerHTML = `
+  <section class="hero">
+    <h1>Family of the Quran</h1>
+    <p>Welcome to your gateway for Islamic knowledge and spiritual growth. We connect you to the timeless wisdom of the Holy Quran and the authentic teachings of Prophet Muhammad ﷺ.</p>
+    <p style="opacity:.75;font-size:.9rem">Begin your journey of learning and reflection with trusted resources.</p>
+  </section>
+  <section class="search-section">
+    <div class="search-card" id="sc">
+      <div class="tabs">
+        <button class="tab-btn ${S.tab==='quran' ?'active':''}" onclick="switchTab('quran')">Search Quran</button>
+        <button class="tab-btn ${S.tab==='hadith'?'active':''}" onclick="switchTab('hadith')">Search Hadith</button>
+      </div>
+      <div class="search-row">
+        <div class="search-input-wrap">
+          ${I.search}
+          <input id="sq" type="text" placeholder="${S.tab==='quran'?'Search Quran verses…':'Search Hadith…'}"
+            value="${esc(S.query)}" onkeydown="if(event.key==='Enter')doSearch()">
+          ${S.query ? `<button class="search-clear" onclick="clearQuery()" title="Clear">${I.x}</button>` : ''}
+        </div>
+        <select class="lang-select" id="sl" onchange="S.lang=this.value">
+          <option value="en" ${S.lang==='en'?'selected':''}>🌐 English</option>
+          <option value="ar" ${S.lang==='ar'?'selected':''}>🌐 Arabic</option>
+        </select>
+      </div>
+      <div class="search-actions">
+        <button class="btn btn-primary" onclick="doSearch()" style="min-width:8rem">Search</button>
+      </div>
+      <div id="sra" style="margin-top:1.5rem"></div>
+    </div>
+  </section>
+  <section class="features">
+    <h2>Explore Sacred Texts</h2>
+    <p class="features-sub">Access comprehensive collections of Islamic scripture and prophetic traditions</p>
+    <div class="features-grid">
+      <div class="feature-card"><div class="feature-icon teal">${I.book}</div><h3>The Holy Quran</h3><p>Search the complete Quran with translations in English and Arabic. Access verses and themes.</p></div>
+      <div class="feature-card"><div class="feature-icon gold">${I.scroll}</div><h3>Hadith Collections</h3><p>Explore authenticated sayings and actions of Prophet Muhammad ﷺ from major collections.</p></div>
+      <div class="feature-card"><div class="feature-icon teal">${I.bookmark}</div><h3>Save &amp; Bookmark</h3><p>Save your favourite verses and hadiths to your personal collection for easy access anytime.</p></div>
+      <div class="feature-card"><div class="feature-icon gold">${I.note}</div><h3>Personal Notepad</h3><p>Take notes and reflections as you study. Export them as PDF or TXT for offline access.</p></div>
+    </div>
+  </section>`;
+
+  paintResults();
+  document.getElementById('sq')?.focus();
+}
+
+function switchTab(tab) { S.tab = tab; S.results = null; S.error = null; renderHome(document.getElementById('app')); }
+function clearQuery()   { S.query = ''; S.results = null; S.error = null; renderHome(document.getElementById('app')); }
+
+async function doSearch() {
+  const q = document.getElementById('sq')?.value?.trim();
+  if (!q) { toast('Please enter a search term', 'error'); return; }
+  S.query = q;  S.lang = document.getElementById('sl')?.value || 'en';
+  S.loading = true; S.results = null; S.error = null;
+  paintResults();
+  try {
+    S.results = await API.search(S.tab, q, S.lang);
+    S.loading  = false;  paintResults();
+  } catch (err) {
+    S.loading  = false;  S.error = err.message || 'An unexpected error occurred.';  paintResults();
+  }
+}
+
+function paintResults() {
+  const area = document.getElementById('sra');
+  if (!area) return;
+  if (S.loading) {
+    area.innerHTML = [1,2,3].map(() => `<div class="result-card" style="padding:1.25rem"><div class="skeleton" style="height:1.5rem;width:45%;margin-bottom:.6rem"></div><div class="skeleton" style="height:.9rem;width:100%;margin-bottom:.35rem"></div><div class="skeleton" style="height:.9rem;width:82%"></div></div>`).join('');
+    return;
+  }
+  if (S.error)   { area.innerHTML = `<div class="error-msg">${esc(S.error)}</div>`; return; }
+  if (!S.results){ area.innerHTML = ''; return; }
+  if (!S.results.length) { area.innerHTML = `<div class="empty-state">${I.search}<h3 style="margin:.75rem 0 .3rem">No results found</h3><p>Try different keywords or check for spelling errors.</p></div>`; return; }
+  area.innerHTML = `<p class="text-sm text-muted mb-2">Found ${S.results.length} result${S.results.length!==1?'s':''}</p>` + S.results.map(r => resultCard(r, S.tab, S.lang)).join('');
+}
+
+/* ═══════════════════════════════════════════════════════
+   BOOKMARKS PAGE
+═══════════════════════════════════════════════════════ */
+let BState = { tab: 'quran', q: '', sort: 'newest' };
+
+function renderBookmarks(el) {
+  document.title = 'My Bookmarks | Family of the Quran';
+  const all   = BM.all();
+  const inTab = all.filter(b => b.type === BState.tab);
+  const list  = filterBM(inTab);
+
+  el.innerHTML = `
+  <div class="page">
+    <div class="page-header">
+      <button class="btn btn-ghost" onclick="navigate('/')" style="gap:.35rem">${I.back} Back</button>
+      <h1 class="page-title">My Bookmarks</h1>
+      <span class="spacer"></span>
+      <span class="text-sm text-muted">${all.length} saved</span>
+    </div>
+    <div class="tabs" style="max-width:22rem;margin-bottom:1.5rem">
+      <button class="tab-btn ${BState.tab==='quran' ?'active':''}" onclick="setBMTab('quran')">Quran (${all.filter(b=>b.type==='quran').length})</button>
+      <button class="tab-btn ${BState.tab==='hadith'?'active':''}" onclick="setBMTab('hadith')">Hadith (${all.filter(b=>b.type==='hadith').length})</button>
+    </div>
+    <div class="filter-bar">
+      <div class="search-input-wrap" style="max-width:18rem">${I.search}
+        <input type="text" placeholder="Filter bookmarks…" value="${esc(BState.q)}"
+          oninput="BState.q=this.value;renderBookmarks(document.getElementById('app'))" style="padding-left:2.3rem">
+      </div>
+      <select class="select-sm" onchange="BState.sort=this.value;renderBookmarks(document.getElementById('app'))">
+        <option value="newest"    ${BState.sort==='newest'   ?'selected':''}>Newest first</option>
+        <option value="oldest"    ${BState.sort==='oldest'   ?'selected':''}>Oldest first</option>
+        <option value="reference" ${BState.sort==='reference'?'selected':''}>By reference</option>
+      </select>
+    </div>
+    ${inTab.length===0
+      ? `<div class="empty-state"><svg class="big" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg><h3>No ${BState.tab} bookmarks yet</h3><p>Bookmark verses or hadiths from the search page.</p><button class="btn btn-primary" style="margin-top:1rem" onclick="navigate('/')">Search Now</button></div>`
+      : list.length===0
+        ? `<div class="empty-state"><h3>No matches</h3><p>Try a different filter.</p></div>`
+        : list.map(b => resultCard(b.data, b.type)).join('')
+    }
+  </div>`;
+}
+
+function filterBM(items) {
+  let r = [...items];
+  if (BState.q.trim()) {
+    const q = BState.q.toLowerCase();
+    r = r.filter(b => {
+      const t = b.type==='quran' ? b.data.verseText : b.data.hadithText;
+      const f = b.type==='quran' ? b.data.verseReference : b.data.hadithReference;
+      return (t||'').toLowerCase().includes(q)||(f||'').toLowerCase().includes(q);
+    });
+  }
+  if (BState.sort==='newest') r.sort((a,b)=>b.timestamp-a.timestamp);
+  else if (BState.sort==='oldest') r.sort((a,b)=>a.timestamp-b.timestamp);
+  else r.sort((a,b)=>{ const ra=a.type==='quran'?a.data.verseReference:a.data.hadithReference; const rb=b.type==='quran'?b.data.verseReference:b.data.hadithReference; return (ra||'').localeCompare(rb||''); });
+  return r;
+}
+function setBMTab(t) { BState.tab=t; BState.q=''; renderBookmarks(document.getElementById('app')); }
+
+/* ═══════════════════════════════════════════════════════
+   NOTEPAD PAGE
+═══════════════════════════════════════════════════════ */
+let npTimer = null;
+
+function renderNotepad(el) {
+  document.title = 'My Notepad | Family of the Quran';
+  const { content, lastSaved } = NP.get();
+  const words = content.trim() ? content.trim().split(/\s+/).length : 0;
+
+  el.innerHTML = `
+  <div class="page" style="display:flex;flex-direction:column">
+    <div class="page-header">
+      <button class="btn btn-ghost" onclick="navigate('/')" style="gap:.35rem">${I.back} Back</button>
+      <h1 class="page-title">My Notepad</h1>
+      <span class="spacer"></span>
+      <div class="flex gap-2" style="flex-wrap:wrap">
+        <button class="btn btn-outline btn-sm" onclick="npExportTXT()">${I.download} TXT</button>
+        <button class="btn btn-outline btn-sm" onclick="npExportPDF()">${I.download} PDF</button>
+        <button class="btn btn-outline btn-sm" onclick="npCopyAll()">${I.copy} Copy All</button>
+        <button class="btn btn-ghost btn-sm" onclick="npClear()" style="color:var(--destructive)">${I.trash} Clear</button>
+      </div>
+    </div>
+    ${lastSaved ? `<p class="text-sm text-muted mb-2" style="margin-bottom:.6rem">Last saved ${new Date(lastSaved).toLocaleTimeString()}</p>` : ''}
+    <textarea id="notepad-area" oninput="npInput(this)" placeholder="Start typing your notes, reflections, or paste verses here…">${esc(content)}</textarea>
+    <div class="flex" style="margin-top:.6rem;justify-content:space-between">
+      <span class="text-sm text-muted" id="np-words">${words} words</span>
+      <span class="text-sm text-muted" id="np-chars">${content.length} characters</span>
+    </div>
+  </div>`;
+}
+
+function npInput(ta) {
+  clearTimeout(npTimer);
+  npTimer = setTimeout(() => {
+    NP.save(ta.value);
+    const w = ta.value.trim() ? ta.value.trim().split(/\s+/).length : 0;
+    const wEl = document.getElementById('np-words'); if (wEl) wEl.textContent = w + ' words';
+    const cEl = document.getElementById('np-chars'); if (cEl) cEl.textContent = ta.value.length + ' characters';
+  }, 500);
+}
+function npExportTXT() {
+  const c = document.getElementById('notepad-area')?.value || NP.get().content;
+  const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(new Blob([c],{type:'text/plain'})), download: 'My_Islamic_Notes.txt' });
+  a.click(); URL.revokeObjectURL(a.href); toast('Exported as TXT', 'success');
+}
+function npExportPDF() {
+  const c = document.getElementById('notepad-area')?.value || NP.get().content;
+  try {
+    const doc = new window.jspdf.jsPDF();
+    doc.setFont('helvetica');
+    doc.text(doc.splitTextToSize(c, 180), 15, 20);
+    doc.save('My_Islamic_Notes.pdf');
+    toast('Exported as PDF', 'success');
+  } catch { toast('PDF export unavailable — try TXT instead', 'error'); }
+}
+function npCopyAll() { clipCopy(document.getElementById('notepad-area')?.value || NP.get().content, 'All notes copied'); }
+function npClear() {
+  if (!confirm('Clear all notes? This cannot be undone.')) return;
+  NP.save(''); renderNotepad(document.getElementById('app')); toast('Notepad cleared');
+}
+
+/* ═══════════════════════════════════════════════════════
+   READING HISTORY PAGE
+═══════════════════════════════════════════════════════ */
+let histQ = '';
+
+function renderHistory(el) {
+  document.title = 'Reading History | Family of the Quran';
+  const all      = Hist.all();
+  const filtered = histQ.trim() ? all.filter(h => {
+    const t = h.type==='quran' ? h.data.verseText : h.data.hadithText;
+    const r = h.type==='quran' ? h.data.verseReference : h.data.hadithReference;
+    return (t||'').toLowerCase().includes(histQ.toLowerCase())||(r||'').toLowerCase().includes(histQ.toLowerCase());
+  }) : all;
+
+  el.innerHTML = `
+  <div class="page">
+    <div class="page-header">
+      <button class="btn btn-ghost" onclick="navigate('/')" style="gap:.35rem">${I.back} Back</button>
+      <h1 class="page-title">Reading History</h1>
+    </div>
+    ${all.length === 0
+      ? `<div class="empty-state">${I.history}<h3 style="margin:.6rem 0 .3rem">No history yet</h3><p>Items you bookmark will appear here.</p><button class="btn btn-primary" style="margin-top:1rem" onclick="navigate('/')">Start Reading</button></div>`
+      : `<div class="filter-bar">
+           <div class="search-input-wrap" style="max-width:18rem">${I.search}
+             <input type="text" placeholder="Search history…" value="${esc(histQ)}"
+               oninput="histQ=this.value;renderHistory(document.getElementById('app'))" style="padding-left:2.3rem">
+           </div>
+           <button class="btn btn-danger btn-sm" onclick="histClear()">${I.trash} Clear History</button>
+         </div>
+         ${filtered.length===0
+           ? `<div class="empty-state"><h3>No matches</h3></div>`
+           : filtered.map((item,i) => {
+               const isQ  = item.type==='quran';
+               const ref  = isQ ? item.data.verseReference  : item.data.hadithReference;
+               const text = isQ ? item.data.verseText        : item.data.hadithText;
+               const title= isQ ? item.data.surahName        : item.data.collectionName;
+               return `<div class="result-card" style="margin-bottom:.75rem">
+                 <div class="result-header">
+                   <div class="result-meta">
+                     <div class="result-icon ${isQ?'quran':'hadith'}">${isQ?I.book:I.scroll}</div>
+                     <div>
+                       <div class="result-title">${esc(title)}</div>
+                       <div class="result-subtitle">${esc(ref)} · ${new Date(item.timestamp).toLocaleDateString()}</div>
+                     </div>
+                   </div>
+                   <button class="btn-icon" onclick="histRemove('${esc(item.id)}','${item.type}')" title="Remove">${I.trash}</button>
+                 </div>
+                 <div class="result-body">
+                   <p class="result-text" style="-webkit-line-clamp:3;display:-webkit-box;-webkit-box-orient:vertical;overflow:hidden">${esc((text||'').slice(0,220))}${(text||'').length>220?'…':''}</p>
+                 </div>
+               </div>`;
+             }).join('')
+         }`
+    }
+  </div>`;
+}
+function histClear()           { if (!confirm('Clear all reading history?')) return; Hist.clear(); histQ=''; toast('History cleared'); renderHistory(document.getElementById('app')); }
+function histRemove(id, type)  { Hist.remove(id, type); renderHistory(document.getElementById('app')); }
+
+/* ═══════════════════════════════════════════════════════
+   DONATION MODAL
+═══════════════════════════════════════════════════════ */
+let D = { amount: 25, custom: '', isCustom: false };
+
+function openDonationModal() {
+  if (document.getElementById('don-modal')) return;
+  const ov = document.createElement('div');
+  ov.id = 'don-modal'; ov.className = 'modal-overlay';
+  ov.innerHTML = `
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-title">&#9825; Support Us</div>
+    <p class="modal-desc">Help us maintain and grow this resource for the Muslim community worldwide.</p>
+    <div class="amount-presets">
+      ${[5,10,25,50,100].map(v=>`<button class="preset-btn${D.amount===v&&!D.isCustom?' active':''}" onclick="setPreset(${v})">\$${v}</button>`).join('')}
+    </div>
+    <input type="number" id="don-custom" min="1" placeholder="Custom amount ($)" value="${D.isCustom?D.custom:''}" oninput="setCustom(this.value)" style="margin-bottom:.4rem">
+    <p style="font-size:.75rem;text-align:center;color:var(--muted-fg)">Secure payment processing powered by Stripe.</p>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeDonationModal()">Cancel</button>
+      <button class="btn btn-primary" id="don-btn" onclick="submitDonation()">
+        Donate <span id="don-amt">$${D.isCustom?(parseFloat(D.custom)||0).toFixed(2):D.amount}</span>
+      </button>
+    </div>
+  </div>`;
+  ov.addEventListener('click', closeDonationModal);
+  document.body.appendChild(ov);
+}
+function closeDonationModal() { document.getElementById('don-modal')?.remove(); }
+function setPreset(v) {
+  D.amount = v; D.isCustom = false; D.custom = '';
+  document.querySelectorAll('.preset-btn').forEach(b=>b.classList.remove('active'));
+  event.target.classList.add('active');
+  const ca = document.getElementById('don-custom'); if (ca) ca.value = '';
+  const da = document.getElementById('don-amt');    if (da) da.textContent = `$${v}`;
+}
+function setCustom(v) {
+  D.isCustom = true; D.custom = v;
+  document.querySelectorAll('.preset-btn').forEach(b=>b.classList.remove('active'));
+  const da = document.getElementById('don-amt'); if (da) da.textContent = `$${(parseFloat(v)||0).toFixed(2)}`;
+}
+async function submitDonation() {
+  const amt = D.isCustom ? parseFloat(D.custom) : D.amount;
+  if (!amt || isNaN(amt) || amt < 1) { toast('Please enter a valid amount ($1 minimum)', 'error'); return; }
+  const btn = document.getElementById('don-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Processing…'; }
+  try {
+    const data = await API.checkout(amt, 'Support for Family of the Quran');
+    window.open(data.url, '_blank', 'noopener');
+    closeDonationModal();
+  } catch {
+    toast('Unable to process donation. Please try again.', 'error');
+    if (btn) { btn.disabled = false; btn.innerHTML = `Donate <span id="don-amt">$${amt}</span>`; }
+  }
+}
+
+/* ═══════════════════════════════════════════════════════
+   DONATION SUCCESS / CANCEL
+═══════════════════════════════════════════════════════ */
+async function renderDonationSuccess(el) {
+  document.title = 'Donation Successful | Family of the Quran';
+  const sid = new URLSearchParams(location.search).get('session_id');
+  el.innerHTML = `<div class="page" style="text-align:center;padding-top:4rem">
+    <div style="font-size:4rem;margin-bottom:1.25rem">&#9989;</div>
+    <h1 style="font-family:'Lora',serif;font-size:2rem;margin-bottom:.75rem">Jazakallah Khayran!</h1>
+    <p class="text-muted" style="max-width:30rem;margin:0 auto 2rem" id="don-msg">Verifying your donation…</p>
+    <button class="btn btn-primary" onclick="navigate('/')">Return Home</button>
+  </div>`;
+  if (!sid) { document.getElementById('don-msg').textContent = 'May Allah bless you and your family abundantly for your generous donation.'; return; }
+  try {
+    const d = await API.session(sid);
+    const amt = d.amountTotal ? `$${(d.amountTotal/100).toFixed(2)}` : '';
+    document.getElementById('don-msg').textContent = `Your donation of ${amt} has been received. May Allah reward you abundantly.`;
+  } catch {
+    document.getElementById('don-msg').textContent = 'Your payment may have been processed. May Allah bless you for your generosity.';
+  }
+}
+
+function renderDonationCancel(el) {
+  document.title = 'Donation Cancelled | Family of the Quran';
+  el.innerHTML = `<div class="page" style="text-align:center;padding-top:4rem">
+    <div style="font-size:4rem;margin-bottom:1.25rem">&#128153;</div>
+    <h1 style="font-family:'Lora',serif;font-size:2rem;margin-bottom:.75rem">No Worries</h1>
+    <p class="text-muted" style="max-width:28rem;margin:0 auto 2rem">Your donation was cancelled. You're welcome to support us another time.</p>
+    <button class="btn btn-primary" onclick="navigate('/')">Return Home</button>
+  </div>`;
+}
+
+function render404(el) {
+  el.innerHTML = `<div class="page" style="text-align:center;padding-top:4rem">
+    <h1 style="font-size:4rem;font-weight:700;margin-bottom:.5rem">404</h1>
+    <p class="text-muted" style="margin-bottom:2rem">Page not found.</p>
+    <button class="btn btn-primary" onclick="navigate('/')">Return Home</button>
+  </div>`;
+}
+
+/* ═══════════════════════════════════════════════════════
+   UTILITY
+═══════════════════════════════════════════════════════ */
+function esc(s) {
+  return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+/* ═══════════════════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════════════════ */
+renderPage(location.pathname);
+</script>
+</body>
+</html>
