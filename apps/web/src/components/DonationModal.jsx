@@ -40,7 +40,7 @@ export default function DonationModal({ isOpen, onClose }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          amount: Math.round(finalAmount * 100), // Convert to cents
+          amount: Math.round(finalAmount * 100),
           donationMessage: 'Support for Family of the Quran'
         })
       });
@@ -50,9 +50,7 @@ export default function DonationModal({ isOpen, onClose }) {
       }
 
       const data = await response.json();
-      
-      // Use window.open to bypass iframe navigation restrictions
-      window.open(data.url, '_blank');
+      window.location.href = data.url;
       onClose();
     } catch (error) {
       console.error('Donation error:', error);
@@ -62,8 +60,15 @@ export default function DonationModal({ isOpen, onClose }) {
     }
   };
 
+  const handleModalClose = (nextOpenState) => {
+    if (!nextOpenState) {
+      setIsLoading(false);
+    }
+    onClose(nextOpenState);
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={handleModalClose}>
       <DialogContent className="sm:max-w-md bg-card border-border/50 shadow-xl">
         <DialogHeader className="text-center sm:text-center pb-4 border-b border-border/50">
           <div className="mx-auto w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-4">
