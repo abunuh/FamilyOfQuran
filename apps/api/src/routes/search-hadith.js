@@ -3,19 +3,21 @@ import logger from '../utils/logger.js';
 
 const router = express.Router();
 
-const BOOK_IDS = [
-  'bukhari',
-  'muslim',
-  'tirmidzi',
-  'abu-daud',
-  'nasai',
-  'ibnu-majah',
-  'ahmad',
-  'darimi',
-  'malik',
+const BOOKS = [
+  { id: 'bukhari', slug: 'bukhari' },
+  { id: 'muslim', slug: 'muslim' },
+  { id: 'tirmidzi', slug: 'tirmidhi' },
+  { id: 'abu-daud', slug: 'abudawud' },
+  { id: 'nasai', slug: 'nasai' },
+  { id: 'ibnu-majah', slug: 'ibnmajah' },
+  { id: 'ahmad', slug: 'ahmad' },
+  { id: 'darimi', slug: 'darimi' },
+  { id: 'malik', slug: 'malik' },
 ];
-const BOOK_RANGE = '1-300';
 const CACHE_TTL_MS = 10 * 60 * 1000;
+const FETCH_TIMEOUT_MS = 45_000;
+const FETCH_RETRY_COUNT = 2;
+const HADITH_DATA_BASE_URL = 'https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions';
 const ARABIC_DIACRITICS_REGEX = /[\u064B-\u065F\u0670\u06D6-\u06ED]/g;
 
 const hadithCache = new Map();
@@ -46,20 +48,57 @@ function formatCollectionName(bookId) {
     .join(' ')}`;
 }
 
-async function getBookHadiths(bookId) {
-  const cacheEntry = hadithCache.get(bookId);
+function getLanguageEdition(language) {
+  return language === 'ar' ? 'ara' : 'eng';
+}
+
+function getCacheKey(bookId, language) {
+  return `${language}:${bookId}`;
+}
+
+async function fetchWithTimeout(url, timeoutMs = FETCH_TIMEOUT_MS) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    return await fetch(url, { signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function fetchBookWithRetry(book, language, attempts = FETCH_RETRY_COUNT) {
+  let lastError;
+  const edition = getLanguageEdition(language);
+  const datasetUrl = `${HADITH_DATA_BASE_URL}/${edition}-${book.slug}.json`;
+
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    try {
+      const response = await fetchWithTimeout(datasetUrl);
+      if (!response.ok) {
+        throw new Error(`Hadith API error (${book.id}): ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      return data?.hadiths || [];
+    } catch (error) {
+      lastError = error;
+      logger.warn(`Hadith fetch failed for ${book.id} attempt ${attempt}/${attempts}: ${error?.message || String(error)}`);
+    }
+  }
+
+  throw lastError || new Error(`Hadith fetch failed for ${book.id}`);
+}
+
+async function getBookHadiths(book, language) {
+  const cacheKey = getCacheKey(book.id, language);
+  const cacheEntry = hadithCache.get(cacheKey);
   if (cacheEntry && (Date.now() - cacheEntry.fetchedAt) < CACHE_TTL_MS) {
     return cacheEntry.items;
   }
 
-  const response = await fetch(`https://api.hadith.gading.dev/books/${bookId}?range=${BOOK_RANGE}`);
-  if (!response.ok) {
-    throw new Error(`Hadith API error (${bookId}): ${response.status} ${response.statusText}`);
-  }
-
-  const data = await response.json();
-  const items = data?.data?.hadiths || [];
-  hadithCache.set(bookId, { fetchedAt: Date.now(), items });
+  const items = await fetchBookWithRetry(book, language);
+  hadithCache.set(cacheKey, { fetchedAt: Date.now(), items });
   return items;
 }
 
@@ -80,36 +119,46 @@ router.get('/hadith', async (req, res) => {
     const normalizedQuery = language === 'ar'
       ? normalizeArabic(query)
       : normalizeText(query);
-    const hadithTextField = language === 'ar' ? 'arab' : 'id';
+    const books = [];
+    const failedBooks = [];
 
-    const books = await Promise.all(
-      BOOK_IDS.map(async (bookId) => ({
-        bookId,
-        items: await getBookHadiths(bookId),
-      }))
-    );
+    for (const book of BOOKS) {
+      try {
+        const items = await getBookHadiths(book, language);
+        books.push({ bookId: book.id, items });
+      } catch (error) {
+        failedBooks.push(book.id);
+        logger.warn(`Skipping hadith collection ${book.id}: ${error?.message || String(error)}`);
+      }
+    }
+
+    if (failedBooks.length > 0) {
+      logger.warn(`Hadith provider unavailable for: ${failedBooks.join(', ')}`);
+    }
+
+    if (!books.length) {
+      return res.status(502).json({ error: 'Hadith provider temporarily unavailable. Please try again.' });
+    }
 
     const results = books
       .flatMap(({ bookId, items }) =>
         items.map((item) => ({
           bookId,
-          number: item.number,
-          arab: item.arab,
-          id: item.id,
+          number: String(item.hadithnumber || item.arabicnumber || '').trim(),
+          text: item.text || '',
         }))
       )
       .filter((item) => {
         if (language === 'ar') {
-          return normalizeArabic(item.arab || '').includes(normalizedQuery);
+          return normalizeArabic(item.text || '').includes(normalizedQuery);
         }
 
-        const searchableEn = normalizeText(item.id || '');
-        return searchableEn.includes(normalizedQuery);
+        return normalizeText(item.text || '').includes(normalizedQuery);
       })
       .slice(0, 50)
       .map((item) => ({
         id: `${item.bookId}-${item.number}`,
-        hadithText: item[hadithTextField] || item.id || item.arab,
+        hadithText: item.text,
         collectionName: formatCollectionName(item.bookId),
         hadithNumber: item.number,
         hadithReference: `${item.bookId} ${item.number}`,
@@ -117,8 +166,8 @@ router.get('/hadith', async (req, res) => {
 
     res.json(results);
   } catch (err) {
-    logger.error('Hadith search error:', err.message);
-    res.status(500).json({ error: err.message });
+    logger.error('Hadith search error:', err.stack || err.message || err);
+    res.status(500).json({ error: 'Hadith search failed. Please try again shortly.' });
   }
 });
 
